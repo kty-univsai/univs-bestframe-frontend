@@ -182,7 +182,7 @@ export const FrameCanvas = ({ props }) => {
     style={{
       display: 'block',
       margin: '0 auto',
-      backgroundColor: '#f1f1f1', // 배경 색
+      backgroundColor: '#000000', // 배경 색
     }}
   />;
 };

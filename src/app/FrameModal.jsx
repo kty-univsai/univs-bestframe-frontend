@@ -4,8 +4,9 @@ import styled from '@emotion/styled';
 import { ModalLayout } from '@/components/ModalLayout';
 import { Color } from '@/styles/color';
 import { FrameCanvas } from '@/app/FrameCanvas';
+import { Button } from '@mui/material';
 
-export const FrameModal = ({modalProps}) => {
+export const FrameModal = ({modalProps, searchCarPlate}) => {
 
   const { state, setState, frameData,  targetObject} = modalProps;
   const [targetData, setTargetData] = useState(null);
@@ -49,7 +50,6 @@ export const FrameModal = ({modalProps}) => {
           }
         }
       }
-
       setHumanData(newHumanData);  
     }
     else if (targetObject.type == 'human') {
@@ -74,10 +74,18 @@ export const FrameModal = ({modalProps}) => {
     if (targetObject && targetObject.type == 'car') {
       const data = frameData.metadata.car.find((c) => {        
         return c.id == targetObject.id;
-      })      
+      })  
+      const data2 = result.data.cars.find((c)=> {
+        return c.id == targetObject.id;
+      })
+      
       relatedObjectIds.car.push(data.id);
 
-      setTargetData(data);      
+      setTargetData({
+        ...data,
+        carplate_number: data2.carplate_number,
+        attributes: data2.attributes
+      });      
     }
     else if (targetObject && targetObject.type == 'human') {
       const data = newHumanData.find((c) => {
@@ -85,12 +93,21 @@ export const FrameModal = ({modalProps}) => {
       })
  
       if (data.overlap) {
-        const carData = frameData.metadata.car.filter((c) => {
-          const idx = data.overlap.findIndex((o)=> {
-            return o == c.id;
-          });        
-          return idx > -1 ? true : false;
-        });
+        let carData = []
+        for (const fc of result.data.cars) {
+          for (const fmc of frameData.metadata.car) {
+            const idx = data.overlap.findIndex((o)=> {
+              return o == fmc.id;
+            });          
+            if (idx > -1 && fmc.id == fc.id) {
+              carData.push({
+                ...fmc,
+                carplate_number: fc.carplate_number,
+                attributes: fc.attributes
+              })
+            } 
+          }        
+        }
         carData.forEach((cd)=> {
           relatedObjectIds.car.push(cd.id);
         });
@@ -147,11 +164,12 @@ export const FrameModal = ({modalProps}) => {
                   </div>
                 }
               </div>
-              <ul>
-                <li><span>GENDER:</span>{targetData && targetData?.apparent_gender == 1 ? 'MALE' : 'FEMALE'}</li>
-                <li><span>AGE:</span>{targetData && targetData?.apparent_age}</li>
-                
-              </ul>
+              <S.DataList>
+                <ul>
+                  <li className="data-list"><span>GENDER:</span>{targetData && targetData?.apparent_gender == 1 ? 'MALE' : 'FEMALE'}</li>
+                  <li className="data-list"><span>AGE:</span>{targetData && targetData?.apparent_age}</li>
+                </ul>
+              </S.DataList>
             </>
             }
             {targetObject && targetObject.type == "car" &&
@@ -189,16 +207,18 @@ export const FrameModal = ({modalProps}) => {
                         </div>
                       }
                     </div>
-                    <ul>
-                      <li><span>GENDER:</span>{hd && hd?.apparent_gender == 1 ? 'MALE' : 'FEMALE'}</li>
-                      <li><span>AGE:</span>{hd && hd?.apparent_age}</li>
-                    </ul>
+                    <S.DataList>
+                      <ul>
+                        <li className="data-list"><span>GENDER:</span>{hd && hd?.apparent_gender == 1 ? 'MALE' : 'FEMALE'}</li>
+                        <li className="data-list"><span>AGE:</span>{hd && hd?.apparent_age}</li>
+                      </ul>
+                    </S.DataList>                    
                   </li>
                 ))}
               </ul>
             </div>
             {carData.length > 0 && 
-              <div>
+              <div style={{marginTop:'20px'}}>
                 <h3>Car</h3>
                 <ul className="car-list">
                 {carData.map((cd) => (
@@ -210,9 +230,16 @@ export const FrameModal = ({modalProps}) => {
                           </div>
                         }
                       </div>
-                      <ul>
-                        <li><span>PLATE NUMBER:</span></li>                      
-                      </ul>
+                      <S.DataList>
+                        <ul>
+                          <li className="data-list"><span>PLATE NUMBER:</span>{cd && cd?.carplate_number}</li>
+                        </ul>                      
+                      </S.DataList>
+                      {cd && cd?.carplate_number &&
+                        <Button onClick={() => {
+                          searchCarPlate(cd?.carplate_number)
+                        }}>Search</Button>
+                      }
                     </li>
                   ))}
                 </ul>
@@ -297,6 +324,26 @@ const S = {
         }
       }
     }
+  `,
+  DataList: styled.div`    
+    margin-left:15px;
+    flex: 1;
+    ul {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      li.data-list {    
+        display:flex;   
+        margin-bottom: 5px;
+        flex-direction: column;
+        span {
+          margin-left: -5px;
+          display: block;
+          width: 100%;
+          color: ${Color.Gray300}
+        }
+      }
+  }
   `,
 
   Frames: styled.div`

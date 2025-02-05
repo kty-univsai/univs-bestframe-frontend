@@ -7,14 +7,12 @@ import axios from 'axios';
 import { FrameModal } from '@/app/FrameModal';
 import { FrameCanvas } from '@/app/FrameCanvas';
 
-
 import FaceIcon from '@mui/icons-material/Face';
 import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 
-
 export default function MainPage() {
-  
+  // const [screenMode, setscreenMode] = useState(1);
   const [frameCarData, setFrameCarData] = useState([]);
   const [frameHumanData, setFrameHumanData] = useState([]);
   const [frameData, setFrameData] = useState([]);
@@ -23,15 +21,16 @@ export default function MainPage() {
   const [selectedCarId, setSelectedCarId] = useState(-1);
   const [intervalId, setIntervalId] = useState(null); 
   const [modalOpen, setModalOpen] = useState(false);
-  const timerRef = useRef(null); // 타이머를 저장할 ref
+  const timerRef = useRef(null); 
   const isPressedRef = useRef(false);
+  const screenMode = useRef(1);
 
-  const scrollFaceListRef = useRef(null);
   const scrollHumanListRef = useRef(null);
   const scrollCarListRef = useRef(null);
 
 
   const fetchData = async () => {
+
     const result = await axios.get("https://studio.univs.ai/api-core/bestframe/frames", {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
@@ -56,14 +55,16 @@ export default function MainPage() {
     setFrameHumanData(human);
     setFrameData(result.data?.rows);
 
-    const frame = result.data?.rows[result.data?.rows.length-1];
-    setSelectedFrameData(frame);
+    if (screenMode.current == 1) {
+      const frame = result.data?.rows[0];
+      setSelectedFrameData(frame);
     
-    setTimeout(()=> {
-      scrollFaceListRef.current.scrollLeft = scrollFaceListRef.current.scrollWidth;
-      scrollHumanListRef.current.scrollLeft = scrollHumanListRef.current.scrollWidth;
-      scrollCarListRef.current.scrollLeft = scrollCarListRef.current.scrollWidth;
-    },500);
+      
+      setTimeout(()=> {
+        scrollHumanListRef.current.scrollLeft = scrollHumanListRef.current.scrollWidth;
+        scrollCarListRef.current.scrollLeft = scrollCarListRef.current.scrollWidth;      
+      },500);
+    }
   }
 
   const displayImage = (image) => {
@@ -78,8 +79,6 @@ export default function MainPage() {
   }
 
   const selectFrame = (frameId, targetObject = null) => {
-    clearInterval(intervalId);
-    setIntervalId(null);
     let frame = frameData.find((f)=> {
       return f.id == frameId;
     })
@@ -95,7 +94,7 @@ export default function MainPage() {
     if (!intervalId) {
       const id = setInterval(()=> {
         fetchData();
-      }, 3000);
+      }, 500);
 
       setIntervalId(id); // intervalId 상태에 저장
 
@@ -113,22 +112,71 @@ export default function MainPage() {
     }
   };
 
+  const humanClass = (human) => {
+    let className = '';
+
+    if (human.overlap && human.overlap.length > 0) {
+      className += ' overlap'; 
+    }
+
+    if (human.id == selectedHumanId ) {
+      className += ' active';  
+    }
+
+    return className;
+  }
+
+  const searchCarPlate = async (carplateNumber) => {
+    clearInterval(intervalId)
+
+    const result = await axios.get(`https://studio.univs.ai/api-core/bestframe/frame/carplate/${carplateNumber}`, {
+      headers: {
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
+        'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
+      }
+    })
+
+    let human = [];
+    let car = [];
+
+    result.data?.rows.slice().reverse().forEach((item)=> {
+      item.metadata.human.forEach(h=> {
+        h.frame_id = item.id;
+        human.push(h)
+      });
+      item.metadata.car.forEach(c=> {
+        c.frame_id = item.id;
+        car.push(c)
+      });
+    });
+    setFrameCarData(car);
+    setFrameHumanData(human);
+    setFrameData(result.data?.rows);
+
+    if (screenMode.current == 1) {
+      const frame = result.data?.rows[0];
+      setSelectedFrameData(frame);
+    
+      
+      setTimeout(()=> {
+        scrollHumanListRef.current.scrollLeft = scrollHumanListRef.current.scrollWidth;
+        scrollCarListRef.current.scrollLeft = scrollCarListRef.current.scrollWidth;      
+      },500);
+    }
+
+  }
+
   useEffect(()=> {
     fetchData();
     if (typeof window !== 'undefined') {
       fetchInterval();
     }
-    const scrollContainer1 = scrollFaceListRef.current;
     const scrollContainer2 = scrollHumanListRef.current;
     const scrollContainer3 = scrollCarListRef.current;
 
-    const handleWheelForContainer1 = (event) => handleWheel(event, scrollContainer1);
     const handleWheelForContainer2 = (event) => handleWheel(event, scrollContainer2);
     const handleWheelForContainer3 = (event) => handleWheel(event, scrollContainer3);
 
-    if (scrollContainer1) {
-      scrollContainer1.addEventListener('wheel', handleWheelForContainer1);
-    }
     if (scrollContainer2) {
       scrollContainer2.addEventListener('wheel', handleWheelForContainer2);
     }
@@ -138,9 +186,7 @@ export default function MainPage() {
 
     // 컴포넌트가 언마운트될 때 이벤트 리스너 제거
     return () => {
-      if (scrollContainer1) {
-        scrollContainer1.removeEventListener('wheel', handleWheelForContainer1);
-      }
+
       if (scrollContainer2) {
         scrollContainer2.removeEventListener('wheel', handleWheelForContainer2);
       }
@@ -155,62 +201,37 @@ export default function MainPage() {
   return (
     <S.Wrapper>
       <S.FrameWrapper>
-        <S.FrameViewer>
+        <S.FrameViewer onClick={()=> {
+          // setscreenMode(1);
+          screenMode.current = 1;
+        }}>
           <FrameCanvas 
             props={{
               frameData:selectedFrameData,
               targetObject: selectedFrameData && selectedFrameData.targetObject ,
-          relatedObjectIds: selectedFrameData && selectedFrameData.targetObject && selectedFrameData.targetObject.relative
+              relatedObjectIds: selectedFrameData && selectedFrameData.targetObject && selectedFrameData.targetObject.relative
             }}
-          />               
+          />
+          <div className="controlled">
+            {screenMode.current == 1 &&
+              <div className="off">
+                Live Play
+              </div>
+            }
+            {screenMode.current == 2 &&
+              <div className="on">
+                Manipulating the screen
+              </div>  
+            }
+            {screenMode.current == 3 &&
+              <div className="on-search">
+                Search
+              </div>  
+            }
+          </div>               
         </S.FrameViewer>
       </S.FrameWrapper>
       <O.Objects>
-       
-        <O.ObjectFace  className="object-wrap">
-          <div className="label">
-            <FaceIcon />
-            <span>FACE</span>
-          </div>
-          <div 
-            className="scroll-wrap"
-            ref={scrollFaceListRef}
-          >
-            <div className="image-wrap">
-            {frameHumanData.map((human) => (
-              human.face_image_path && (
-                <span
-                  className={human.id == selectedHumanId ? "image-box active" : "image-box"}
-                  onMouseDown={()=>{
-                    setSelectedHumanId(human.id);
-                    setSelectedCarId(-1);        
-                    selectFrame(human.frame_id, {
-                      id: human.id,
-                      type: 'human',
-                      relative: {
-                        human: [human.id]
-                      }
-                     });
-                     isPressedRef.current = false; 
-                     timerRef.current = setTimeout(() => {
-                       isPressedRef.current = true; 
-                       setModalOpen(true);
-                       
-                    }, 500); // 1초 후에 이벤트 발생
-                  }}
-                  onMouseUp={()=>{
-                    clearTimeout(timerRef.current); // 타이머 취소                    
-                  }}
-                  onMouseLeave={() => {
-                    clearTimeout(timerRef.current);
-                  }}
-                  style={displayImage("https://studio.univs.ai/image-store" + human.face_image_path)}
-                ></span>
-              )
-            ))}
-            </div>
-          </div>
-        </O.ObjectFace>
         <O.ObjectHuman  className="object-wrap">
           <div className="label">
             <DirectionsWalkIcon />
@@ -223,10 +244,11 @@ export default function MainPage() {
             <div className="image-wrap">
             {frameHumanData.map((human) => (
               human.body_image_path && (
-                <span
-                  className={human.id == selectedHumanId ? "image-box active" : "image-box"}
-
+                <div
+                  key={human.id}
+                  className={(humanClass(human))}
                   onMouseDown={()=>{
+                    screenMode.current = 2;
                     setSelectedHumanId(human.id);
                     setSelectedCarId(-1);        
                     selectFrame(human.frame_id, {
@@ -235,12 +257,12 @@ export default function MainPage() {
                       relative: {
                         human: [human.id]
                       }
-                     });
-                     isPressedRef.current = false; 
-                     timerRef.current = setTimeout(() => {
-                       isPressedRef.current = true; 
-                       setModalOpen(true);
-                       
+                    });
+                    isPressedRef.current = false; 
+                    timerRef.current = setTimeout(() => {
+                      isPressedRef.current = true; 
+                      setModalOpen(true);
+                      
                     }, 500); // 1초 후에 이벤트 발생
                   }}
                   onMouseUp={()=>{
@@ -249,8 +271,26 @@ export default function MainPage() {
                   onMouseLeave={() => {
                     clearTimeout(timerRef.current);
                   }}
-                  style={displayImage("https://studio.univs.ai/image-store" + human.body_image_path)}
-                ></span>
+                >
+                  {human.face_image_path &&                    
+                    <span
+                      className="image-box face"
+                      style={displayImage("https://studio.univs.ai/image-store" + human.face_image_path)}
+                    >
+                    </span>
+                  }
+                  {!human.face_image_path &&                    
+                    <span
+                      className="image-box face"
+                    >                      
+                      <FaceIcon />
+                    </span>
+                  }
+                  <span
+                    className="image-box body"                    
+                    style={displayImage("https://studio.univs.ai/image-store" + human.body_image_path)}
+                  ></span>
+                </div>
               )
             ))}
             </div>
@@ -267,35 +307,39 @@ export default function MainPage() {
           >
             <div className="image-wrap">
               {frameCarData.map((car)=> (
-                <span 
-                className={car.id == selectedCarId ? "image-box active" : "image-box"}
-
+                <div 
+                  key={car.id}
                   onMouseDown={()=>{
+                    screenMode.current = 2;
                     setSelectedHumanId(-1)
                     setSelectedCarId(car.id)
                     selectFrame(car.frame_id, {
                       id: car.id,
                       type: 'car',
                       relative: {
-                       car: [car.id]
-                       }
-                     });                    
-                     isPressedRef.current = false; 
+                      car: [car.id]
+                      }
+                    });                    
+                    isPressedRef.current = false; 
                     timerRef.current = setTimeout(() => {
                       isPressedRef.current = true; 
-                      setModalOpen(true);
-                      
-                   }, 500); // 1초 후에 이벤트 발생
-                 }}
-                 onMouseUp={()=>{
-                   clearTimeout(timerRef.current); // 타이머 취소                    
-                 }}
-                 onMouseLeave={() => {
-                   clearTimeout(timerRef.current);
-                 }}
+                      setModalOpen(true);                      
+                    }, 500); // 1초 후에 이벤트 발생
+                }}
+                onMouseUp={()=>{
+                  clearTimeout(timerRef.current); // 타이머 취소                    
+                }}
+                onMouseLeave={() => {
+                  clearTimeout(timerRef.current);
+                }}
+                >
+                <span 
+                  className={car.id == selectedCarId ? "image-box car active" : "image-box car"}
+                  
                   style={displayImage("https://studio.univs.ai/image-store" + car.image_path)}
                 >
                 </span>    
+                </div>
               ))}
             </div>
           </div>
@@ -308,7 +352,8 @@ export default function MainPage() {
           setState:setModalOpen,
           frameData:selectedFrameData,
           targetObject: selectedFrameData && selectedFrameData.targetObject
-        }}        
+        }}       
+        searchCarPlate={searchCarPlate} 
       >
         </FrameModal>
     </S.Wrapper>
@@ -331,11 +376,36 @@ const S = {
     border-bottom: 1px solid ${Color.Gray100};
   `,
   FrameViewer: styled.div `
+    position:relative;
     flex: 1;
     text-align: center; 
     background-color: ${Color.Black};
     img {      
       height: 100%;
+    }
+    div.controlled {
+      position:absolute;
+      right: 20px;
+      top:20px;
+      width:240px;    
+      color: ${Color.White};
+      font-size: 16px;
+      font-weight: bold;
+      div.on {
+        padding: 15px 0;      
+        background-color: ${Color.Red100};
+        border-radius: 30px;
+      }
+      div.off {
+        padding: 15px 0;      
+        background-color: ${Color.Green100};
+        border-radius: 30px;
+      }
+      div.on-search {
+        padding: 15px 0;      
+        background-color: ${Color.Primary};
+        border-radius: 30px;
+      }
     }
   `,
 
@@ -395,28 +465,47 @@ const O = {
         display: flex;
         height: 100%;
         white-space: nowrap;
-
-        span.image-box {
-          width: 80px;
-          height: 100%;
-          margin-right: 2px;  
-          cursor: pointer;
+        div {
+          display:flex;
+          flex-direction: column;
           box-sizing: border-box;
+          border: 2px solid ${Color.White};  
+          margin-right: 2px;
+          span.image-box {
+            width: 80px;
+            cursor: pointer;           
+            display:flex;
+            justify-content:center;
+            align-items:center;
+          
+            &.face {
+              height: 80px;
+              color: ${Color.Gray200}
+            }
+            &.body {
+              flex: 1;
+            }
+            &.car {
+              height: 100%;
+            }
+          }
           &.active {           
             border: 2px solid ${Color.Primary2};
           } 
+          &.overlap {           
+            border: 2px solid ${Color.Red100};
+          } 
           &:hover {
             border: 2px solid ${Color.Primary};
-          }     
+          }
         }
+        
       }      
     }    
   `,
-  ObjectFace: styled.div `
-    flex:0.3
-  `,
+
   ObjectHuman: styled.div `
-    flex:0.4
+    flex:0.7
   `,
   ObjectCar: styled.div `
     flex:0.3
