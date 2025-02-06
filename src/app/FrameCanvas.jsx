@@ -17,12 +17,20 @@ export const FrameCanvas = ({ props }) => {
         setCarList([])
         if (frameData) {
             const img = new Image();
-            img.src = "https://studio.univs.ai/image-store" + frameData.frame_image;
+            img.src = `${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${frameData.frame_image}`;
             img.onload = () => setImage(img);
 
             let humanList = [];
             let carList = [];
-            
+            if (!relatedObjectIds && !targetObject) {
+                frameData.metadata.human.forEach(fd => {                    
+                    humanList.push(fd);                    
+                });
+                frameData.metadata.car.forEach(fd => {                    
+                    carList.push(fd);                    
+                });
+            }
+
             if (relatedObjectIds) {
                 if (relatedObjectIds["human"]) {
                     for (const id of relatedObjectIds["human"]) {

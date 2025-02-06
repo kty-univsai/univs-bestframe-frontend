@@ -18,7 +18,7 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
       car: [],
       human: []
     };
-    const result = await axios.get(`https://studio.univs.ai/api-core/bestframe/frame/${frameData.id}`, {
+    const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frame/${frameData.id}`, {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
         'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
@@ -44,7 +44,7 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
               body_image_path: fmh.body_image_path,
               overlap: fmh.overlap,
               ...hd
-            }
+            }            
             newHumanData.push(nhd1);
             relatedObjectIds.human.push(nhd1.id);
           }
@@ -52,23 +52,23 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
       }
       setHumanData(newHumanData);  
     }
-    else if (targetObject.type == 'human') {
-     
+    else if (targetObject.type == 'human') {     
       for (const hd of result.data.humans) {
         for (const fmh of frameData.metadata.human) {        
-          if (hd.id == fmh.id && hd.id == targetObject.id) {          
+          if (hd.id == fmh.id && hd.id == targetObject.id) {             
             const nhd1 = {
+              face_image_path: fmh?.face_image_path ?? null  ,
               body_image_path: fmh.body_image_path,
               overlap: fmh.overlap,
               ...hd
-            }
+            }            
             newHumanData.push(nhd1);
             relatedObjectIds.human.push(nhd1.id);
           }
         }
       }
 
-      setHumanData(newHumanData);  
+      // setHumanData(newHumanData);  
     }
     
     if (targetObject && targetObject.type == 'car') {
@@ -86,6 +86,7 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
         carplate_number: data2.carplate_number,
         attributes: data2.attributes
       });      
+
     }
     else if (targetObject && targetObject.type == 'human') {
       const data = newHumanData.find((c) => {
@@ -154,21 +155,31 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
               <div>
                 {targetData && targetData.face_image_path &&
                   <div className="image-box"
-                    style={displayImage("https://studio.univs.ai/image-store" + targetData.face_image_path)}>
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.face_image_path}`)}>
 
                   </div>
                 }
                 {targetData && targetData.body_image_path &&
                   <div className="image-box body" 
-                    style={displayImage("https://studio.univs.ai/image-store" + targetData.body_image_path)}>                  
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.body_image_path}`)}>                  
                   </div>
                 }
               </div>
               <S.DataList>
-                <ul>
+                {targetData?.vip &&
+                  <div className="vip-wrapper">
+                    <div className="image-box face" style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${targetData.vip.public_url}`)} />
+                    <ul style={{marginTop:'10px'}}>
+                      <li className="data-list"><span>SIMILARITY:</span>{(targetData.vip.similarity * 100).toFixed(2)+"%"}</li>
+                      <li className="data-list"><span>NAME:</span>{targetData.vip?.properties?.name}</li>
+                      <li className="data-list"><span>PHONE:</span>{targetData.vip?.properties?.phone}</li>
+                    </ul>
+                  </div>
+                }
+                <ul style={{marginTop:'10px'}}>
                   <li className="data-list"><span>GENDER:</span>{targetData && targetData?.apparent_gender == 1 ? 'MALE' : 'FEMALE'}</li>
                   <li className="data-list"><span>AGE:</span>{targetData && targetData?.apparent_age}</li>
-                </ul>
+                </ul>                
               </S.DataList>
             </>
             }
@@ -177,14 +188,21 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
                 <div>              
                   {targetData && targetData.image_path &&
                     <div className="image-box car" 
-                      style={displayImage("https://studio.univs.ai/image-store" + targetData.image_path)}>                  
+                      style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.image_path}`)}>                  
                     </div>
                   }
                 </div>
-                <ul>
-                  <li></li>
-                  <li></li>                
-                </ul>
+                <S.DataList>
+                  <ul>
+                    <li className="data-list"><span>PLATE NUMBER:</span>{targetData?.carplate_number}</li>
+                  </ul>   
+                  {targetData?.carplate_number &&
+                    <Button onClick={() => {
+                      searchCarPlate(targetData?.carplate_number)
+                    }}>Search</Button>
+                  }                   
+                </S.DataList>
+            
               </>
             }
           </S.Target>
@@ -193,25 +211,35 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
               <h3>Human</h3>
               <ul className="human-list">
                 {humanData.map((hd) => (
-                  <li>
+                  <li className="human-list-li">
                     <div>
                       {hd && hd.face_image_path &&
                         <div className="image-box"
-                          style={displayImage("https://studio.univs.ai/image-store" + hd.face_image_path)}>
+                          style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.face_image_path}`)}>
 
                         </div>
                       }
                       {hd && hd.body_image_path &&
                         <div className="image-box body" 
-                          style={displayImage("https://studio.univs.ai/image-store" + hd.body_image_path)}>                  
+                          style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.body_image_path}`)}>                  
                         </div>
                       }
                     </div>
                     <S.DataList>
-                      <ul>
+                      {hd?.vip &&
+                        <div className="vip-wrapper">
+                          <div className="image-box face" style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.vip.public_url}`)} />
+                          <ul style={{marginTop:'10px'}}>
+                            <li className="data-list"><span>SIMILARITY:</span>{(hd.vip.similarity * 100).toFixed(2)+"%"}</li>
+                            <li className="data-list"><span>NAME:</span>{hd.vip?.properties?.name}</li>
+                            <li className="data-list"><span>PHONE:</span>{hd.vip?.properties?.phone}</li>
+                          </ul>
+                        </div>
+                      }
+                      <ul style={{marginTop:'10px'}}>
                         <li className="data-list"><span>GENDER:</span>{hd && hd?.apparent_gender == 1 ? 'MALE' : 'FEMALE'}</li>
                         <li className="data-list"><span>AGE:</span>{hd && hd?.apparent_age}</li>
-                      </ul>
+                      </ul>                      
                     </S.DataList>                    
                   </li>
                 ))}
@@ -222,11 +250,11 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
                 <h3>Car</h3>
                 <ul className="car-list">
                 {carData.map((cd) => (
-                    <li>
+                    <li className="car-list-li">
                       <div>                      
                         {cd && cd.image_path &&
                           <div className="image-box car" 
-                            style={displayImage("https://studio.univs.ai/image-store" + cd.image_path)}>                  
+                            style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${cd.image_path}`)}>                  
                           </div>
                         }
                       </div>
@@ -234,12 +262,13 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
                         <ul>
                           <li className="data-list"><span>PLATE NUMBER:</span>{cd && cd?.carplate_number}</li>
                         </ul>                      
+                        {cd && cd?.carplate_number &&
+                          <Button onClick={() => {
+                            searchCarPlate(cd?.carplate_number)
+                          }}>Search</Button>
+                        }
                       </S.DataList>
-                      {cd && cd?.carplate_number &&
-                        <Button onClick={() => {
-                          searchCarPlate(cd?.carplate_number)
-                        }}>Search</Button>
-                      }
+                      
                     </li>
                   ))}
                 </ul>
@@ -300,7 +329,7 @@ const S = {
     max-height: 600px;
     ul.human-list {
       margin-top:15px;
-      li {
+      li.human-list-li {
         display:flex;
         flex-direction:row;
         div.image-box {
@@ -313,7 +342,7 @@ const S = {
     }
     ul.car-list {
       margin-top:15px;
-      li {
+      li.car-list-li {
         display:flex;
         flex-direction:row;
         div.image-box {
@@ -335,15 +364,20 @@ const S = {
       li.data-list {    
         display:flex;   
         margin-bottom: 5px;
-        flex-direction: column;
+        flex-direction: row;
         span {
-          margin-left: -5px;
+          margin-right: 10px;
           display: block;
-          width: 100%;
+          min-width: 100px;
+          text-align: right;
           color: ${Color.Gray300}
         }
-      }
-  }
+      }    
+    }
+    div.vip-wrapper {
+      display: flex;
+      flex-direction: row;      
+    }
   `,
 
   Frames: styled.div`

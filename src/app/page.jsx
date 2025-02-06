@@ -21,6 +21,8 @@ export default function MainPage() {
   const [selectedCarId, setSelectedCarId] = useState(-1);
   const [intervalId, setIntervalId] = useState(null); 
   const [modalOpen, setModalOpen] = useState(false);
+  const [carPlateNumber, setCarPlateNumber] = useState("");
+
   const timerRef = useRef(null); 
   const isPressedRef = useRef(false);
   const screenMode = useRef(1);
@@ -31,7 +33,7 @@ export default function MainPage() {
 
   const fetchData = async () => {
 
-    const result = await axios.get("https://studio.univs.ai/api-core/bestframe/frames", {
+    const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frames`, {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
         'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
@@ -58,8 +60,7 @@ export default function MainPage() {
     if (screenMode.current == 1) {
       const frame = result.data?.rows[0];
       setSelectedFrameData(frame);
-    
-      
+          
       setTimeout(()=> {
         scrollHumanListRef.current.scrollLeft = scrollHumanListRef.current.scrollWidth;
         scrollCarListRef.current.scrollLeft = scrollCarListRef.current.scrollWidth;      
@@ -90,15 +91,13 @@ export default function MainPage() {
 
  
 
-  const fetchInterval = () => {
-    if (!intervalId) {
-      const id = setInterval(()=> {
-        fetchData();
-      }, 500);
+  const fetchInterval = () => {    
+    screenMode.current = 1;    
+    const id = setInterval(()=> {
+      fetchData();
+    }, 500);
 
-      setIntervalId(id); // intervalId 상태에 저장
-
-    }     
+    setIntervalId(id); // intervalId 상태에 저장  
   }
 
   const handleWheel = (event, scrollContainerRef) => {
@@ -127,9 +126,11 @@ export default function MainPage() {
   }
 
   const searchCarPlate = async (carplateNumber) => {
+    screenMode.current = 3;
+    setCarPlateNumber(carplateNumber)
     clearInterval(intervalId)
-
-    const result = await axios.get(`https://studio.univs.ai/api-core/bestframe/frame/carplate/${carplateNumber}`, {
+    setModalOpen(false)
+    const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frame/carplate/${carplateNumber}`, {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
         'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
@@ -139,7 +140,8 @@ export default function MainPage() {
     let human = [];
     let car = [];
 
-    result.data?.rows.slice().reverse().forEach((item)=> {
+
+    result.data?.data.slice().reverse().forEach((item)=> {
       item.metadata.human.forEach(h=> {
         h.frame_id = item.id;
         human.push(h)
@@ -151,18 +153,17 @@ export default function MainPage() {
     });
     setFrameCarData(car);
     setFrameHumanData(human);
-    setFrameData(result.data?.rows);
+    setFrameData(result.data?.data);
 
-    if (screenMode.current == 1) {
-      const frame = result.data?.rows[0];
-      setSelectedFrameData(frame);
-    
+    // if (screenMode.current == 1) {
+      const frame = result.data?.data[0];
+      setSelectedFrameData(frame);    
       
       setTimeout(()=> {
         scrollHumanListRef.current.scrollLeft = scrollHumanListRef.current.scrollWidth;
         scrollCarListRef.current.scrollLeft = scrollCarListRef.current.scrollWidth;      
       },500);
-    }
+    // }
 
   }
 
@@ -202,8 +203,8 @@ export default function MainPage() {
     <S.Wrapper>
       <S.FrameWrapper>
         <S.FrameViewer onClick={()=> {
-          // setscreenMode(1);
-          screenMode.current = 1;
+          // setscreenMode(1);                    
+          fetchInterval();          
         }}>
           <FrameCanvas 
             props={{
@@ -226,6 +227,9 @@ export default function MainPage() {
             {screenMode.current == 3 &&
               <div className="on-search">
                 Search
+                <h3 style={{marginTop:'10px'}}>
+                {carPlateNumber}
+                </h3>
               </div>  
             }
           </div>               
@@ -247,7 +251,9 @@ export default function MainPage() {
                 <div
                   key={human.id}
                   className={(humanClass(human))}
-                  onMouseDown={()=>{
+                  onContextMenu={(event)=> {
+                    event.preventDefault(); 
+                    clearInterval(intervalId);
                     screenMode.current = 2;
                     setSelectedHumanId(human.id);
                     setSelectedCarId(-1);        
@@ -258,24 +264,26 @@ export default function MainPage() {
                         human: [human.id]
                       }
                     });
-                    isPressedRef.current = false; 
-                    timerRef.current = setTimeout(() => {
-                      isPressedRef.current = true; 
-                      setModalOpen(true);
-                      
-                    }, 500); // 1초 후에 이벤트 발생
-                  }}
-                  onMouseUp={()=>{
-                    clearTimeout(timerRef.current); // 타이머 취소                    
-                  }}
-                  onMouseLeave={() => {
-                    clearTimeout(timerRef.current);
-                  }}
+                    setModalOpen(true);                      
+                  }} 
+                  onClick={()=>{
+                    clearInterval(intervalId);
+                    screenMode.current = 2;
+                    setSelectedHumanId(human.id);
+                    setSelectedCarId(-1);
+                    selectFrame(human.frame_id, {
+                      id: human.id,
+                      type: 'human',
+                      relative: {
+                        human: [human.id]
+                      }
+                    });                            
+                  }}                  
                 >
                   {human.face_image_path &&                    
                     <span
                       className="image-box face"
-                      style={displayImage("https://studio.univs.ai/image-store" + human.face_image_path)}
+                      style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.face_image_path}`)}
                     >
                     </span>
                   }
@@ -288,7 +296,7 @@ export default function MainPage() {
                   }
                   <span
                     className="image-box body"                    
-                    style={displayImage("https://studio.univs.ai/image-store" + human.body_image_path)}
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.body_image_path}`)}
                   ></span>
                 </div>
               )
@@ -309,7 +317,22 @@ export default function MainPage() {
               {frameCarData.map((car)=> (
                 <div 
                   key={car.id}
-                  onMouseDown={()=>{
+                  onClick={()=>{
+                    clearInterval(intervalId);
+                    screenMode.current = 2;
+                    setSelectedHumanId(-1)
+                    setSelectedCarId(car.id)    
+                    selectFrame(car.frame_id, {
+                      id: car.id,
+                      type: 'car',
+                      relative: {
+                      car: [car.id]
+                      }
+                    });
+                  }}
+                  onContextMenu={(event)=> {
+                    event.preventDefault(); 
+                    clearInterval(intervalId);
                     screenMode.current = 2;
                     setSelectedHumanId(-1)
                     setSelectedCarId(car.id)
@@ -319,24 +342,14 @@ export default function MainPage() {
                       relative: {
                       car: [car.id]
                       }
-                    });                    
-                    isPressedRef.current = false; 
-                    timerRef.current = setTimeout(() => {
-                      isPressedRef.current = true; 
-                      setModalOpen(true);                      
-                    }, 500); // 1초 후에 이벤트 발생
-                }}
-                onMouseUp={()=>{
-                  clearTimeout(timerRef.current); // 타이머 취소                    
-                }}
-                onMouseLeave={() => {
-                  clearTimeout(timerRef.current);
-                }}
+                    });                                        
+                    setModalOpen(true);                      
+                  }}
                 >
                 <span 
                   className={car.id == selectedCarId ? "image-box car active" : "image-box car"}
                   
-                  style={displayImage("https://studio.univs.ai/image-store" + car.image_path)}
+                  style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${car.image_path}`)}
                 >
                 </span>    
                 </div>
