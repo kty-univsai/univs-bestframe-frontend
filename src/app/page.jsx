@@ -92,12 +92,18 @@ export default function MainPage() {
  
 
   const fetchInterval = () => {    
-    screenMode.current = 1;    
+    screenMode.current = 1;        
+    clearInterval(intervalId);    
     const id = setInterval(()=> {
       fetchData();
     }, 500);
 
     setIntervalId(id); // intervalId 상태에 저장  
+    
+  }
+  const resetInterval = () => {    
+    clearInterval(intervalId);
+    setIntervalId(intervalId);
   }
 
   const handleWheel = (event, scrollContainerRef) => {
@@ -167,6 +173,42 @@ export default function MainPage() {
 
   }
 
+  const selectHumanEvent = (event, human, isModal=false)=> {
+    event.preventDefault(); 
+    resetInterval();
+    screenMode.current = 2;
+    setSelectedHumanId(human.id);
+    setSelectedCarId(-1);        
+    selectFrame(human.frame_id, {
+      id: human.id,
+      type: 'human',
+      relative: {
+        human: [human.id]
+      }
+    });
+    if (isModal) {
+      setModalOpen(true);
+    }    
+  }
+
+  const selectCarEvent = (event, car, isModal=false)=> {
+    event.preventDefault(); 
+    resetInterval();
+    screenMode.current = 2;
+    setSelectedHumanId(-1)
+    setSelectedCarId(car.id)
+    selectFrame(car.frame_id, {
+      id: car.id,
+      type: 'car',
+      relative: {
+      car: [car.id]
+      }
+    });                                        
+    if (isModal) {
+      setModalOpen(true);
+    }    
+  }
+
   useEffect(()=> {
     fetchData();
     if (typeof window !== 'undefined') {
@@ -211,7 +253,11 @@ export default function MainPage() {
               frameData:selectedFrameData,
               targetObject: selectedFrameData && selectedFrameData.targetObject ,
               relatedObjectIds: selectedFrameData && selectedFrameData.targetObject && selectedFrameData.targetObject.relative
-            }}
+            }}            
+            carEvent={selectCarEvent}            
+            humanEvent={selectHumanEvent}
+            
+
           />
           <div className="controlled">
             {screenMode.current == 1 &&
@@ -252,32 +298,10 @@ export default function MainPage() {
                   key={human.id}
                   className={(humanClass(human))}
                   onContextMenu={(event)=> {
-                    event.preventDefault(); 
-                    clearInterval(intervalId);
-                    screenMode.current = 2;
-                    setSelectedHumanId(human.id);
-                    setSelectedCarId(-1);        
-                    selectFrame(human.frame_id, {
-                      id: human.id,
-                      type: 'human',
-                      relative: {
-                        human: [human.id]
-                      }
-                    });
-                    setModalOpen(true);                      
+                    selectHumanEvent(event, human, true);
                   }} 
-                  onClick={()=>{
-                    clearInterval(intervalId);
-                    screenMode.current = 2;
-                    setSelectedHumanId(human.id);
-                    setSelectedCarId(-1);
-                    selectFrame(human.frame_id, {
-                      id: human.id,
-                      type: 'human',
-                      relative: {
-                        human: [human.id]
-                      }
-                    });                            
+                  onClick={(event)=>{
+                    selectHumanEvent(event, human);
                   }}                  
                 >
                   {human.face_image_path &&                    
@@ -298,6 +322,13 @@ export default function MainPage() {
                     className="image-box body"                    
                     style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.body_image_path}`)}
                   ></span>
+                  <span className="object-label human">
+                    <span>
+                      {human.id}
+                    </span>                    
+                    <div>                      
+                    </div>                    
+                  </span>
                 </div>
               )
             ))}
@@ -317,41 +348,25 @@ export default function MainPage() {
               {frameCarData.map((car)=> (
                 <div 
                   key={car.id}
-                  onClick={()=>{
-                    clearInterval(intervalId);
-                    screenMode.current = 2;
-                    setSelectedHumanId(-1)
-                    setSelectedCarId(car.id)    
-                    selectFrame(car.frame_id, {
-                      id: car.id,
-                      type: 'car',
-                      relative: {
-                      car: [car.id]
-                      }
-                    });
-                  }}
                   onContextMenu={(event)=> {
-                    event.preventDefault(); 
-                    clearInterval(intervalId);
-                    screenMode.current = 2;
-                    setSelectedHumanId(-1)
-                    setSelectedCarId(car.id)
-                    selectFrame(car.frame_id, {
-                      id: car.id,
-                      type: 'car',
-                      relative: {
-                      car: [car.id]
-                      }
-                    });                                        
-                    setModalOpen(true);                      
+                    selectCarEvent(event, car, true);
+                  }}
+                  onClick={(event)=>{
+                    selectCarEvent(event, car);
                   }}
                 >
-                <span 
-                  className={car.id == selectedCarId ? "image-box car active" : "image-box car"}
-                  
-                  style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${car.image_path}`)}
-                >
-                </span>    
+                  <span 
+                    className={car.id == selectedCarId ? "image-box car active" : "image-box car"}
+                    
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${car.image_path}`)}
+                  >
+                  </span>    
+                  <span className="object-label car">
+                    <span>
+                      {car.id}
+                    </span>                    
+                    <div></div>                    
+                  </span>
                 </div>
               ))}
             </div>
@@ -479,6 +494,7 @@ const O = {
         height: 100%;
         white-space: nowrap;
         div {
+          position: relative;
           display:flex;
           flex-direction: column;
           box-sizing: border-box;
@@ -512,7 +528,32 @@ const O = {
             border: 2px solid ${Color.Primary};
           }
         }
-        
+        span.object-label {
+          > div  {
+            position: absolute;
+            margin: 0 !important;
+            border: none !important;
+            top:0;left:0;right:0;bottom:0;            
+            opacity: 0.5;
+            background-color: ${Color.Black};
+            z-index:11;
+          }
+          > span {
+            position:absolute;
+            z-index: 20;
+            width:100%;            
+            margin-top:6px;
+            margin-left:2px;
+            font-size:12px;
+          }
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 24px;
+          z-index: 10;
+          color: #fff;
+        }
       }      
     }    
   `,
@@ -521,6 +562,7 @@ const O = {
     flex:0.7
   `,
   ObjectCar: styled.div `
-    flex:0.3
+    flex:0.3;
+    position:relative;
   `,  
 }

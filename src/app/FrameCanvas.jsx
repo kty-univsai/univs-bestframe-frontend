@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export const FrameCanvas = ({ props }) => {
+export const FrameCanvas = ({ props, carEvent, humanEvent }) => {
 
 
     const { frameData, targetObject, relatedObjectIds } = props;
@@ -143,9 +143,22 @@ export const FrameCanvas = ({ props }) => {
             const scaledX2 = x2 * scaleX;
             const scaledY2 = y2 * scaleY;
 
-            ctx.strokeStyle = 'red';  // 선 색상
+            ctx.strokeStyle = '#0B479F';  // 선 색상
             ctx.lineWidth = 3;        // 선 두께
             ctx.strokeRect(scaledX1, scaledY1, scaledX2 - scaledX1, scaledY2 - scaledY1);
+
+            const label = `${car.id}`; // 라벨 텍스트
+            ctx.fillStyle = '#0B479F';  // 텍스트 색상
+            ctx.font = '12px Arial bold';    // 폰트 스타일 및 크기
+            ctx.fillText(label, scaledX1, scaledY1 - 5);
+
+            ctx.lineWidth = 3;         // 외곽선 두께
+            ctx.strokeStyle = '#ffffff';  // 외곽선 색상 (검정색)
+            ctx.lineJoin = 'round';        // 외곽선의 모서리 스타일
+            ctx.strokeText(label, scaledX1, scaledY1 -5);
+            ctx.fillText(label, scaledX1, scaledY1 - 5);
+
+
         })
 
 
@@ -160,25 +173,23 @@ export const FrameCanvas = ({ props }) => {
             const scaledX2 = x2 * scaleX;
             const scaledY2 = y2 * scaleY;
 
-            ctx.strokeStyle = 'red';  // 선 색상
+            ctx.strokeStyle = '#B61C1A';  // 선 색상
             ctx.lineWidth = 3;        // 선 두께
             ctx.strokeRect(scaledX1, scaledY1, scaledX2 - scaledX1, scaledY2 - scaledY1);
+            
+            const label = `${hl.id}`; // 라벨 텍스트
+            ctx.fillStyle = '#B61C1A';  // 텍스트 색상
+            ctx.font = '12px Arial bold';    // 폰트 스타일 및 크기
+            ctx.fillText(label, scaledX1, scaledY1 - 5);
+
+            ctx.lineWidth = 3;         // 외곽선 두께
+            ctx.strokeStyle = '#ffffff';  // 외곽선 색상 (검정색)
+            ctx.lineJoin = 'round';        // 외곽선의 모서리 스타일
+            ctx.strokeText(label, scaledX1, scaledY1 -5);
+            ctx.fillText(label, scaledX1, scaledY1 - 5);
+
         })
 
-    //     rectData.forEach((rect) => {
-    //     const { x1, y1, x2, y2 } = rect;
-        
-    //     // 비율에 맞게 좌표 변환
-    //     const scaledX1 = x1 * scaleX;
-    //     const scaledY1 = y1 * scaleY;
-    //     const scaledX2 = x2 * scaleX;
-    //     const scaledY2 = y2 * scaleY;
-
-    //     // 직사각형 그리기 (strokeRect로 테두리 그리기)
-    //     ctx.strokeStyle = 'red';  // 선 색상
-    //     ctx.lineWidth = 2;        // 선 두께
-    //     ctx.strokeRect(scaledX1, scaledY1, scaledX2 - scaledX1, scaledY2 - scaledY1);
-    // });
   };
 
   
