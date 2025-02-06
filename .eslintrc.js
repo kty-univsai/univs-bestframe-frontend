@@ -1,8 +1,11 @@
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
+    globals: {
+        process: 'readonly',  // 전역 변수 `process`를 읽기 전용으로 선언
+    },
     env: {
-        node: true, // Node.js 환경 설정
-        browser: true, // 브라우저 환경 설정 (필요한 경우)
+        "node": true,
+        "browser": true,
     },
     extends: [
       'plugin:@typescript-eslint/recommended',

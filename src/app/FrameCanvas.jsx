@@ -17,7 +17,7 @@ export const FrameCanvas = ({ props }) => {
         setCarList([])
         if (frameData) {
             const img = new Image();
-            img.src = `${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${frameData.frame_image}`;
+            img.src = `${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${frameData.frame_image}`;
             img.onload = () => setImage(img);
 
             let humanList = [];
