@@ -23,8 +23,6 @@ export default function MainPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [carPlateNumber, setCarPlateNumber] = useState("");
 
-  const timerRef = useRef(null); 
-  const isPressedRef = useRef(false);
   const screenMode = useRef(1);
 
   const scrollHumanListRef = useRef(null);

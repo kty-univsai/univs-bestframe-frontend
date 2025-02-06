@@ -122,10 +122,6 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
     // setFrameImage("https://studio.univs.ai/image-store" + frameData.frame_image);
   };
 
-  const handleClose = () => {
-    setState(false);
-  }
-
   const displayImage = (image) => {
     const style = {
       backgroundImage: `url(${image})`,
