@@ -1,5 +1,9 @@
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
+    env: {
+        node: true, // Node.js 환경 설정
+        browser: true, // 브라우저 환경 설정 (필요한 경우)
+    },
     extends: [
       'plugin:@typescript-eslint/recommended',
       'next',

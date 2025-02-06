@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export const FrameCanvas = ({ props, carEvent, humanEvent }) => {
+export const FrameCanvas = ({ props }) => {
 
 
     const { frameData, targetObject, relatedObjectIds } = props;
