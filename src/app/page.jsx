@@ -31,7 +31,7 @@ export default function MainPage() {
 
   const fetchData = async () => {
 
-    const result = await axios.get(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frames`, {
+    const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frames`, {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
         'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
@@ -134,7 +134,7 @@ export default function MainPage() {
     setCarPlateNumber(carplateNumber)
     clearInterval(intervalId)
     setModalOpen(false)
-    const result = await axios.get(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frame/carplate/${carplateNumber}`, {
+    const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frame/carplate/${carplateNumber}`, {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
         'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
@@ -305,7 +305,7 @@ export default function MainPage() {
                   {human.face_image_path &&                    
                     <span
                       className="image-box face"
-                      style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.face_image_path}`)}
+                      style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.face_image_path}`)}
                     >
                     </span>
                   }
@@ -318,7 +318,7 @@ export default function MainPage() {
                   }
                   <span
                     className="image-box body"                    
-                    style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.body_image_path}`)}
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${human.body_image_path}`)}
                   ></span>
                   <span className="object-label human">
                     <span>
@@ -356,7 +356,7 @@ export default function MainPage() {
                   <span 
                     className={car.id == selectedCarId ? "image-box car active" : "image-box car"}
                     
-                    style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${car.image_path}`)}
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${car.image_path}`)}
                   >
                   </span>    
                   <span className="object-label car">

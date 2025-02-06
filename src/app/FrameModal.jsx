@@ -18,7 +18,7 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
       car: [],
       human: []
     };
-    const result = await axios.get(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frame/${frameData.id}`, {
+    const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/bestframe/frame/${frameData.id}`, {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIyNSIsIm9yZ19ncm91cF9pZCI6ImRlNTNhNzIyLTkzNDMtNDllMC1hMmVlLTQ0ZWFjNjlhZmU1NiIsIm5hbWUiOiJ1bml2cyIsImVtYWlsIjoia3R5QHVuaXZzLmFpIiwiaWF0IjoxNzM2Mzk1NDc5LCJleHAiOjM0NzI3OTA5NTh9.XzxfCy3V0wc8MpYO6m6LvT98UESKOrMXayITTJdncpA`, // Bearer 토큰 추가
         'Content-Type': 'application/json' // JSON 형식 지정 (필요 시)
@@ -151,20 +151,20 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
               <div>
                 {targetData && targetData.face_image_path &&
                   <div className="image-box"
-                    style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.face_image_path}`)}>
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.face_image_path}`)}>
 
                   </div>
                 }
                 {targetData && targetData.body_image_path &&
                   <div className="image-box body" 
-                    style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.body_image_path}`)}>                  
+                    style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.body_image_path}`)}>                  
                   </div>
                 }
               </div>
               <S.DataList>
                 {targetData?.vip &&
                   <div className="vip-wrapper">
-                    <div className="image-box face" style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${targetData.vip.public_url}`)} />
+                    <div className="image-box face" style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${targetData.vip.public_url}`)} />
                     <ul style={{marginTop:'10px'}}>
                       <li className="data-list"><span>SIMILARITY:</span>{(targetData.vip.similarity * 100).toFixed(2)+"%"}</li>
                       <li className="data-list"><span>NAME:</span>{targetData.vip?.properties?.name}</li>
@@ -184,7 +184,7 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
                 <div>              
                   {targetData && targetData.image_path &&
                     <div className="image-box car" 
-                      style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.image_path}`)}>                  
+                      style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store/${targetData.image_path}`)}>                  
                     </div>
                   }
                 </div>
@@ -211,20 +211,20 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
                     <div>
                       {hd && hd.face_image_path &&
                         <div className="image-box"
-                          style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.face_image_path}`)}>
+                          style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.face_image_path}`)}>
 
                         </div>
                       }
                       {hd && hd.body_image_path &&
                         <div className="image-box body" 
-                          style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.body_image_path}`)}>                  
+                          style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.body_image_path}`)}>                  
                         </div>
                       }
                     </div>
                     <S.DataList>
                       {hd?.vip &&
                         <div className="vip-wrapper">
-                          <div className="image-box face" style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.vip.public_url}`)} />
+                          <div className="image-box face" style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${hd.vip.public_url}`)} />
                           <ul style={{marginTop:'10px'}}>
                             <li className="data-list"><span>SIMILARITY:</span>{(hd.vip.similarity * 100).toFixed(2)+"%"}</li>
                             <li className="data-list"><span>NAME:</span>{hd.vip?.properties?.name}</li>
@@ -250,7 +250,7 @@ export const FrameModal = ({modalProps, searchCarPlate}) => {
                       <div>                      
                         {cd && cd.image_path &&
                           <div className="image-box car" 
-                            style={displayImage(`${import.meta.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${cd.image_path}`)}>                  
+                            style={displayImage(`${process.env.NEXT_PUBLIC_IMAGESTORE_URL}/image-store${cd.image_path}`)}>                  
                           </div>
                         }
                       </div>
